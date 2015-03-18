@@ -16,7 +16,6 @@ rfast <- readRDS("../data/manchester/rf.Rds")
 rquiet <- readRDS("../data/manchester/rq.Rds")
 l <- readRDS("../data/manchester/l.Rds")
 zones <- readRDS("../data/manchester/z.Rds")
-flow <- l@data
 
 journeyLabel <- function(distance, percentage, route){
   sprintf("<dl><dt>Distance </dt><dd>%s km</dd><dt>Journeys by bike</dt><dd>%s%%</dd><dt>Type of Route</dt><dd>%s</dd></dl>", distance, percentage, route)
@@ -73,17 +72,17 @@ shinyServer(function(input, output){
   output$map = renderLeaflet(map %>%
                                {
                                  ## Add polygones (of MSOA boundaries)
-                                 if (input$zone_type == 'msoa')
-                                   addPolygons(. , data = zones
+                                 if (input$zone_type == 'msoa'){
+                                   ord_zone <- order(zones[[input$zone_type]])
+                                   addPolygons(. , data = ord_zone
                                                , fillOpacity = 0.2
                                                , opacity = 0.3
-                                               , fillColor = zones$clc
-                                               , color = "grey"
+                                               , fillColor = colorRampPalette(c("red", "red"))(ncol(ord_zone))
                                    )
-                                 else .
+                                 }else{ . }
                                } %>%
                                {
-                                 if (input$line_type == 'straight' && input$nos_lines != 0){
+                                 if (input$line_type == 'straight'){
                                    sorted_l <- sort_lines(l, input$line_attr, as.numeric(input$nos_lines), input$map_bounds)
                                    addPolylines(., data = sorted_l, color = 'blue'
                                                 # Sequence in descending order
@@ -93,7 +92,7 @@ shinyServer(function(input, output){
                                    .
                                }%>%
                                {
-                                 if (input$line_type == 'route' && input$nos_lines != 0){
+                                 if (input$line_type == 'route'){
                                    sorted_fast  <- sort_lines(rfast, input$line_attr, as.numeric(input$nos_lines), input$map_bounds)
                                    sorted_quiet <- sort_lines(rquiet, input$line_attr, as.numeric(input$nos_lines), input$map_bounds)
                                    addPolylines(., data = sorted_fast, color = "red"
